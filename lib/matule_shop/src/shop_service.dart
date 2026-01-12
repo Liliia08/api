@@ -1,5 +1,4 @@
-// Сервис магазина
-
+/// Сервис для работы с магазином
 import 'models.dart';
 import 'api_client.dart';
 
@@ -9,7 +8,7 @@ class ShopService {
   ShopService({required String baseUrl})
       : _client = ApiClient(baseUrl: baseUrl);
 
-  // 3.1 Акции и новости
+  /// Получить список новостей
   Future<List<News>> getNews() async {
     try {
       final response = await _client.get('collections/news/records');
@@ -17,28 +16,33 @@ class ShopService {
 
       if (items == null) return [];
 
-      return items.map((item) => News.fromJson(item)).toList();
+      return items.map((item) {
+        return News.fromJson(item as Map<String, dynamic>);
+      }).toList();
     } catch (e) {
-      print('Error loading news: $e');
+      print('Ошибка загрузки новостей: $e');
       return [];
     }
   }
 
-  // 3.2 Список товаров с поиском
+  /// Получить список товаров
   Future<List<Product>> getProducts({
     String? search,
     String? category,
+    int limit = 10,
   }) async {
     try {
       final Map<String, String> queryParams = {};
 
       if (search != null && search.isNotEmpty) {
-        queryParams['filter'] = "(title ?~ '$search')";
+        queryParams['filter'] = "(title~'$search')";
       }
 
       if (category != null && category.isNotEmpty) {
-        queryParams['filter'] = "(typeCloses = '$category')";
+        queryParams['filter'] = "(typeCloses='$category')";
       }
+
+      queryParams['perPage'] = limit.toString();
 
       final response = await _client.get(
         'collections/products/records',
@@ -46,16 +50,19 @@ class ShopService {
       );
 
       final items = response['items'] as List?;
+
       if (items == null) return [];
 
-      return items.map((item) => Product.fromJson(item)).toList();
+      return items.map((item) {
+        return Product.fromJson(item as Map<String, dynamic>);
+      }).toList();
     } catch (e) {
-      print('Error loading products: $e');
+      print('Ошибка загрузки товаров: $e');
       return [];
     }
   }
 
-  // 3.3 Детали товара
+  /// Получить детали товара по ID
   Future<Product?> getProductDetail(String productId) async {
     try {
       final response = await _client.get(
@@ -63,13 +70,8 @@ class ShopService {
       );
       return Product.fromJson(response);
     } catch (e) {
-      print('Error loading product details: $e');
+      print('Ошибка загрузки деталей товара: $e');
       return null;
     }
-  }
-
-  // Установить токен (для защищенных запросов)
-  void setAuthToken(String token) {
-    _client.setToken(token);
   }
 }
