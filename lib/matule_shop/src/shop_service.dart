@@ -1,77 +1,53 @@
-/// Сервис для работы с магазином
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'models.dart';
-import 'api_client.dart';
 
 class ShopService {
-  final ApiClient _client;
+  final String baseUrl;
 
-  ShopService({required String baseUrl})
-      : _client = ApiClient(baseUrl: baseUrl);
+  ShopService({required this.baseUrl});
 
-  /// Получить список новостей
+  Future<List<Product>> getProducts() async {  // Убрал параметры для простоты
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/collections/products/records?perPage=2'), // Ограничиваем 2 товара
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final items = data['items'] as List? ?? [];
+
+        return items.map((item) {
+          return Product.fromJson(item as Map<String, dynamic>);
+        }).toList();
+      } else {
+        print('Ошибка HTTP: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Ошибка API: $e');
+      return [];
+    }
+  }
+
   Future<List<News>> getNews() async {
     try {
-      final response = await _client.get('collections/news/records');
-      final items = response['items'] as List?;
+      final response = await http.get(
+        Uri.parse('$baseUrl/collections/news/records'),
+      );
 
-      if (items == null) return [];
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final items = data['items'] as List? ?? [];
 
-      return items.map((item) {
-        return News.fromJson(item as Map<String, dynamic>);
-      }).toList();
+        return items.map((item) {
+          return News.fromJson(item as Map<String, dynamic>);
+        }).toList();
+      }
+      return [];
     } catch (e) {
       print('Ошибка загрузки новостей: $e');
       return [];
-    }
-  }
-
-  /// Получить список товаров
-  Future<List<Product>> getProducts({
-    String? search,
-    String? category,
-    int limit = 10,
-  }) async {
-    try {
-      final Map<String, String> queryParams = {};
-
-      if (search != null && search.isNotEmpty) {
-        queryParams['filter'] = "(title~'$search')";
-      }
-
-      if (category != null && category.isNotEmpty) {
-        queryParams['filter'] = "(typeCloses='$category')";
-      }
-
-      queryParams['perPage'] = limit.toString();
-
-      final response = await _client.get(
-        'collections/products/records',
-        queryParams: queryParams,
-      );
-
-      final items = response['items'] as List?;
-
-      if (items == null) return [];
-
-      return items.map((item) {
-        return Product.fromJson(item as Map<String, dynamic>);
-      }).toList();
-    } catch (e) {
-      print('Ошибка загрузки товаров: $e');
-      return [];
-    }
-  }
-
-  /// Получить детали товара по ID
-  Future<Product?> getProductDetail(String productId) async {
-    try {
-      final response = await _client.get(
-        'collections/products/records/$productId',
-      );
-      return Product.fromJson(response);
-    } catch (e) {
-      print('Ошибка загрузки деталей товара: $e');
-      return null;
     }
   }
 }
