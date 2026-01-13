@@ -1,7 +1,7 @@
-// Главный файл библиотеки
+/// Библиотека API для Matule магазина
+library matule_api;
 
-library matule_shop;
-
-export 'src/models.dart';
-export 'src/shop_service.dart';
-// ApiClient не экспортируем, он внутренний
+// Экспортируем публичные классы
+export 'src/models.dart' show Product, News, User;
+export 'src/shop_service.dart' show ShopService;
+// ApiClient не экспортируем - он внутренний

@@ -1,53 +1,95 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'models.dart';
+import 'api_client.dart';
 
+/// Сервис для работы с магазином
 class ShopService {
-  final String baseUrl;
+  final ApiClient _client;
 
-  ShopService({required this.baseUrl});
+  ShopService({required String baseUrl})
+      : _client = ApiClient(baseUrl: baseUrl);
 
-  Future<List<Product>> getProducts() async {  // Убрал параметры для простоты
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/collections/products/records?perPage=2'), // Ограничиваем 2 товара
-      );
+  /// Получить список новостей
+  Future<List<News>> getNews() async {
+    final response = await _client.get('collections/news/records');
+    final items = response['items'] as List? ?? [];
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final items = data['items'] as List? ?? [];
-
-        return items.map((item) {
-          return Product.fromJson(item as Map<String, dynamic>);
-        }).toList();
-      } else {
-        print('Ошибка HTTP: ${response.statusCode}');
-        return [];
-      }
-    } catch (e) {
-      print('Ошибка API: $e');
-      return [];
-    }
+    return items.map((item) {
+      return News.fromJson(item as Map<String, dynamic>);
+    }).toList();
   }
 
-  Future<List<News>> getNews() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/collections/news/records'),
-      );
+  /// Получить список товаров
+  Future<List<Product>> getProducts({
+    String? search,
+    String? category,
+  }) async {
+    final Map<String, String> queryParams = {};
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final items = data['items'] as List? ?? [];
-
-        return items.map((item) {
-          return News.fromJson(item as Map<String, dynamic>);
-        }).toList();
-      }
-      return [];
-    } catch (e) {
-      print('Ошибка загрузки новостей: $e');
-      return [];
+    if (search != null && search.isNotEmpty) {
+      queryParams['filter'] = "(title~'$search')";
     }
+
+    if (category != null && category.isNotEmpty) {
+      queryParams['filter'] = "(typeCloses='$category')";
+    }
+
+    final response = await _client.get(
+      'collections/products/records',
+      queryParams: queryParams.isNotEmpty ? queryParams : null,
+    );
+
+    final items = response['items'] as List? ?? [];
+
+    return items.map((item) {
+      return Product.fromJson(item as Map<String, dynamic>);
+    }).toList();
+  }
+
+  /// Получить детали товара
+  Future<Product> getProductDetail(String productId) async {
+    final response = await _client.get(
+      'collections/products/records/$productId',
+    );
+
+    return Product.fromJson(response);
+  }
+
+  /// Авторизация пользователя
+  Future<User> login(String email, String password) async {
+    final response = await _client.post(
+      'collections/users/auth-with-password',
+      body: {
+        'identity': email,
+        'password': password,
+      },
+    );
+
+    final user = User.fromJson(response);
+
+    // Сохраняем токен для будущих запросов
+    if (user.token != null) {
+      _client.setToken(user.token!);
+    }
+
+    return user;
+  }
+
+  /// Регистрация пользователя
+  Future<User> register(String email, String password) async {
+    final response = await _client.post(
+      'collections/users/records',
+      body: {
+        'email': email,
+        'password': password,
+        'passwordConfirm': password,
+      },
+    );
+
+    return User.fromJson(response);
+  }
+
+  /// Установить токен авторизации (если уже есть)
+  void setAuthToken(String token) {
+    _client.setToken(token);
   }
 }
