@@ -1,5 +1,3 @@
-/// Модели данных API
-
 class Product {
   final String id;
   final String title;
@@ -27,15 +25,6 @@ class Product {
       imageUrl: json['image_url']?.toString() ?? json['imageUrl']?.toString(),
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'price': price,
-    'description': description,
-    'typeCloses': typeCloses,
-    'imageUrl': imageUrl,
-  };
 }
 
 class News {
@@ -57,33 +46,6 @@ class News {
       title: json['title']?.toString() ?? 'Новость',
       description: json['description']?.toString(),
       imageUrl: json['image_url']?.toString() ?? json['imageUrl']?.toString(),
-    );
-  }
-}
-
-/// Модель пользователя (для авторизации)
-class User {
-  final String id;
-  final String email;
-  final String? firstName;
-  final String? lastName;
-  final String? token;
-
-  User({
-    required this.id,
-    required this.email,
-    this.firstName,
-    this.lastName,
-    this.token,
-  });
-
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: json['id']?.toString() ?? json['record']['id']?.toString() ?? '',
-      email: json['email']?.toString() ?? json['record']['email']?.toString() ?? '',
-      firstName: json['firstname']?.toString(),
-      lastName: json['lastname']?.toString(),
-      token: json['token']?.toString(),
     );
   }
 }
