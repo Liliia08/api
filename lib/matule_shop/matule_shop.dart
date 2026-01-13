@@ -1,4 +1,3 @@
-library matule_api;
+library network_layer;
 
-export 'src/models.dart';
-export 'src/shop_service.dart';
+export 'src/network_layer.dart';
