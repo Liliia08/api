@@ -19,7 +19,7 @@ class ApiService {
     return headers;
   }
 
-  Future<dynamic> _request(
+  Future<Map<String, dynamic>> _request(
       String method,
       String endpoint, [
         Map<String, dynamic>? data,
@@ -57,9 +57,9 @@ class ApiService {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isNotEmpty) {
-          return json.decode(response.body);
+          return json.decode(response.body) as Map<String, dynamic>;
         }
-        return null;
+        return {};
       } else {
         throw Exception('Ошибка ${response.statusCode}: ${response.reasonPhrase}');
       }
@@ -69,10 +69,9 @@ class ApiService {
   }
 
   // Методы для удобства
-  Future<dynamic> get(String endpoint) => _request('GET', endpoint);
-  Future<dynamic> post(String endpoint, Map<String, dynamic> data) =>
+  Future<Map<String, dynamic>> get(String endpoint) => _request('GET', endpoint);
+  Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> data) =>
       _request('POST', endpoint, data);
-  Future<dynamic> patch(String endpoint, Map<String, dynamic> data) =>
+  Future<Map<String, dynamic>> patch(String endpoint, Map<String, dynamic> data) =>
       _request('PATCH', endpoint, data);
-  Future<dynamic> delete(String endpoint) => _request('DELETE', endpoint);
 }
